@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- Xin Li -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Actors and Movies</title>
+    <style>
+        table, td, th {
+            border: 1px solid black;
+            padding: 5px;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        tr:nth-child(odd) {
+            background-color: #d3d0d0;
+        }
+
+    </style>
+</head>
+<body>
+
+<p>
+    <b>Search for actors, roles, movies or Roles/Movies</b>
+</p>
+
+<p>Search substring: <br>
+<input type="text" id="searchStr"></p>
+
+<button id="actor_btn" onclick="searchSubstring('actor')" type="button">Actors Like</button>
+<button id="role_btn" onclick="searchSubstring('role')" type="button">Roles Like</button>
+<button id="movie_btn" onclick="searchSubstring('movie')" type="button">Movies Like</button>
+<hr>
+
+<p>
+    Roles/Movies for actor:<br>
+    <input type="text" id="actorfullname" onchange="actorfullname()"/>
+</p>
+
+<hr>
+
+<h4 id="tableheading"></h4>
+
+<table id="show-list"></table>
+
+<script>
+
+    function actorfullname(){
+        var req = new XMLHttpRequest();
+        var fullname = document.getElementById("actorfullname").value;
+        req.open("GET", "controller.php?list_type=fullname"+"&name="+fullname, true);
+        req.send();
+        req.onreadystatechange = function () {
+            var toChange = document.getElementById("show-list");
+            var tableheading = document.getElementById("tableheading");
+            tableheading.innerHTML = "";
+            toChange.innerHTML = "";
+            if(req.readyState == 4 && req.status == 200){
+                var array = JSON.parse(req.responseText);
+                var str = "";
+                if(array.length == 0){
+                    str += "No matches for '" + fullname + "'";
+                    tableheading.innerHTML = str;
+                    return;
+                } else {
+                    tableheading.innerHTML = "Roles/Movies for '" + fullname + "'";
+                    for (var i = 0; i < array.length; i++) 
+                        str += "<tr><td>" + array[i]['role'] + ": " + array[i]['name'] + "</td></tr>";
+                }
+                toChange.innerHTML = str;
+            }
+        }
+    }
+
+    function searchSubstring(value) {
+        var anObj = new XMLHttpRequest();
+        var inputStr = document.getElementById("searchStr").value;
+        anObj.open("GET", "controller.php?list_type="+value+"&name="+inputStr, true);
+        anObj.send();
+        anObj.onreadystatechange = function () {
+            var toChange = document.getElementById("show-list");
+            var tableheading = document.getElementById("tableheading");
+            tableheading.innerHTML = "";
+            toChange.innerHTML = "";
+
+            if (anObj.readyState == 4 && anObj.status == 200) {
+                document.getElementById("searchStr").value = "";
+                // Use this alert when you get a JSON parse error
+                // You may be trying parse an error message as if it were JSON
+                var array = JSON.parse(anObj.responseText);
+                var str = "";
+                if(array.length == 0){
+                    str += "No matches for '" + inputStr + "'";
+                    tableheading.innerHTML = str;
+                    return;
+                }
+                
+                if (value == "movie") {
+                    tableheading.innerHTML = "Movies like '" + inputStr + "'";
+                    for (var i = 0; i < array.length; i++) 
+                        str += "<tr><td>" + array[i]['name'] + "</td></tr>";
+                } else if (value == "actor") {
+                    tableheading.innerHTML = "Actors like '" + inputStr + "'";
+                    for (var i = 0; i < array.length; i++) 
+                        str += "<tr><td>" + array[i]['first_name'] + " " + array[i]['last_name'] + "</td></tr>";
+                } else if (value == "role") {
+                    tableheading.innerHTML = "Roles like '" + inputStr + "'";
+                    for (var i = 0; i < array.length; i++) 
+                        str += "<tr><td>" + array[i]['role'] + "</td></tr>";
+                }
+                toChange.innerHTML = str;
+            }
+        };
+    }
+</script>
+
+</body>
+</html>
